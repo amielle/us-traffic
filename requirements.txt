@@ -1,0 +1,13 @@
+gdown
+numpy
+pandas
+sklearn
+matplotlib
+lightgbm
+reverse_geocoder
+folium
+selenium
+flaml
+pystan==2.19.1.1
+prophet
+pyarrow
