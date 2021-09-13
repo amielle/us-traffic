@@ -1,5 +1,7 @@
 # US Traffic (2015)
 
+<p align="center"><img src="imgs/anims/sample_traffic.gif" ></p>
+
 The repository contains analysis of traffic volume trends from [2015 US traffic data](https://www.kaggle.com/jboysen/us-traffic-2015) with simple proofs-of-concept (PoC) to show possibility of using the data for forecasting. Additional insights are also included in this README to show possible use cases and how to extend our findings.
 
 Results of the analysis and models may be reproduced by following the steps under *1. Prerequisites* then *2. Usage guide*. It's also possible to look at the *3. Summary of findings* section to check the overview of the repository contents.
@@ -44,6 +46,7 @@ The repository contains the following structure:
 us-traffic
 │   
 └───imgs
+│   └───anims
 │   └───eda
 │   │   └─── ...
 └───src
