@@ -1,7 +1,6 @@
 import os
 import pandas as pd
 import numpy as np
-from tqdm import tqdm
 
 common_cols = ["direction_of_travel",
                "fips_state_code",
@@ -24,7 +23,7 @@ def get_new_vol_cols(traffic_data):
     traffic_vol_cols = [
         word for word in traffic_data.columns if 'traffic_volume_counted' in word]
     traffic_data.rename(columns=dict(zip(traffic_vol_cols,
-                                         new_traffic_vol_cols)), inplace=True)
+                                     new_traffic_vol_cols)), inplace=True)
 
     return traffic_data
 
@@ -171,18 +170,25 @@ def get_dataset_splits(df, test_count=61, datetime_unit="D", ratio_split=False, 
     return train_df, val_df, test_df
 
 
-# Based on:
-# - https://towardsdatascience.com/fast-and-robust-sliding-window-vectorization-with-numpy-3ad950ed62f5
-# - https://machinelearningmastery.com/xgboost-for-time-series-forecasting/
+def get_sliding_windows(df, n_in=1, n_out=1, dropnan=True):
+    cols = list()
 
-def get_sliding_windows(array, max_time, sub_window_size, stride_size):
-    sub_windows = (
-        np.expand_dims(np.arange(sub_window_size), 0) +
-        np.expand_dims(np.arange(max_time + 1, step=stride_size), 0).T
-    )
+    # input sequence (t-n, ... t-1)
+    for i in range(n_in, 0, -1):
+        cols.append(df.shift(i))
 
-    array = array[sub_windows]
-    X_values = array[:-1, :]
-    y_values = array[1:, -stride_size:]
+    # forecast sequence (t, t+1, ... t+n)
+    for i in range(0, n_out):
+        cols.append(df.shift(-i))
+
+    # put it all together
+    windowed_entries = pd.concat(cols, axis=1)
+
+    # drop rows with NaN values
+    if dropnan:
+        windowed_entries.dropna(inplace=True)
+
+    windowed_entries = windowed_entries.values
+    X_values, y_values = windowed_entries[:, :-1], windowed_entries[:, -1]
 
     return X_values, y_values
