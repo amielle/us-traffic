@@ -175,6 +175,55 @@ To understand the general behavior of the data, data points are initially aggreg
   
 #### 3.1.4 Features for forecasting
 
-### 3.2 Forecasting PoC
+Some of the features that were explored are the following:
+
+* Historical traffic volume
+    * determined by *traffic_volume_counted_after*
+* Temporal features
+    * Cyclical timestamps (expressed as sin & cos values)
+        * Month of year
+        * Day of month
+        * Day of week
+        * Hour of day
+    * Part of day (0-5AM, 6-11AM, 12-5PM, 6-11PM)
+    * Weekend vs. weekday
+* Spatial features
+    * longitude
+    * latitude
+    * fips state code
+    * station_id
+    * urban/rural from functional_classification_name
+    * Additionally, neighboring stations may also be retrieved by sorting and retrieving the [distances between the longitude and latitude values](https://mypages.iit.edu/~maslanka/3Dcoordinates.pdf) of stations
+* Traffic features - Can be disregarded if volume trends to be checked are for locations relative to the station (no need for lane/direction in this case)
+    * lane of travel
+    * direction of travel 
+
   
-### 3.3 Insights and recommendations
+### 3.2 Forecasting PoC
+
+For a forecasting PoC, several models such as XGBoost, LightGB, and FBProphet was explored. The main objective set is to predict T+1 to T+24 traffic volume for a given day (e.g. 24 hourly entries). XGBoost models were trained for 11 states with the highest amount of entries in the dataset with the following results.
+  
+|    | RMSE (Test) | Max Traffic   Volume (Test) | Mean Traffic   Volume (Test) | Traffic Volume   Standard Deviation(Test) | FIPS State Code | State Name  |
+|----|-------------|-----------------------------|------------------------------|-------------------------------------------|-----------------|-------------|
+| 0  | 814.343292  | 35606                       | 2589.144178                  | 3651.882857                               | 12              | FLORIDA     |
+| 1  | 399.729373  | 17801                       | 1459.280962                  | 1785.368333                               | 51              | VIRGINIA    |
+| 2  | 1807.944088 | 100095                      | 2827.452846                  | 3734.130332                               | 39              | OHIO        |
+| 3  | 850.074584  | 55398                       | 1958.167863                  | 3135.525856                               | 13              | GEORGIA     |
+| 4  | 370.427766  | 14132                       | 1131.936928                  | 1563.80398                                | 55              | WISCONSIN   |
+| 5  | 783.391322  | 21754                       | 2146.187504                  | 2997.321082                               | 53              | WASHINGTON  |
+| 6  | 215.129808  | 11241                       | 622.384583                   | 1074.048508                               | 16              | IDAHO       |
+| 7  | 2490.213012 | 105893                      | 1371.468579                  | 4295.141007                               | 36              | NEW   YORK  |
+| 8  | 623.811068  | 22308                       | 1555.004114                  | 2568.41778                                | 40              | OKLAHOMA    |
+| 9  | 464.095366  | 17396                       | 1324.281701                  | 1820.947934                               | 28              | MISSISSIPPI |
+| 10 | 428.878986  | 16690                       | 1095.755869                  | 1864.26651                                | 29              | MISSOURI    |
+  
+Relative to the maximum, mean, and standard deviation values of the traffic volume, the results provide a pretty good baseline given the general parameters set for the models. To parallelize experimentation, the notebook *4. Experimentation with FLAML* was run in Colab. However, forecasting models such as FBProphet provided resulted in high RMSE and generally unreliable forecasts.
+  
+### 3.3 Recommendations
+
+- Explore more complex models
+- Add more features to the modeling
+- Note adjacency between stations
+- Perform clustering across the stations to determine anomalous values for the coordinate entries per station
+- Utilize models to give business insight such as placing advertisements or opening establishments when there are high data traffic
+- Also possible to model user behavior such as UE movement in telecommunications
