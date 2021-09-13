@@ -1,7 +1,8 @@
 import argparse
 import os
-from config import urls, filenames
-from datautils import create_folder, gdrive_download
+from utils.config import urls, filenames
+from utils.datautils import create_folder, gdrive_download
+
 
 def main():
     parser = argparse.ArgumentParser()

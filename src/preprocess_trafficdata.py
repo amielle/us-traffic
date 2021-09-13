@@ -1,13 +1,26 @@
+import argparse
 import os
 from tqdm import tqdm
+from utils import preprocess, datautils
+from utils.config import filenames
+from utils.datautils import create_folder
 
 
 def main():
-    from utils import preprocess, datautils
-    from utils.config import filenames
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-d", "--datadir", type=str,
+                        help="Indicates directory/location where the data is to be stored.")
+    args = parser.parse_args()
 
-    DATA_LOCATION = os.path.join(os.getcwd(), 'data')
+    if args.datadir == None:
+        print("Missing argument. Sample usage:")
+        print(r"python ./src/utils/preprocess_trafficdata.py -d <data-directory>")
+        print("Use -h flag for more details.")
+        os._exit(0)
+
+    DATA_LOCATION = args.datadir
     datautils.create_folder(DATA_LOCATION)
+    os.chdir(DATA_LOCATION)
 
     traffic_data, traffic_stations = datautils. load_traffic_datasets(DATA_LOCATION,
                                                                       filenames["TRAFFIC_DATA"],
@@ -21,7 +34,12 @@ def main():
 
     verbose = False
 
-    for fips_state_code in tqdm(traffic_data["fips_state_code"].unique()):
+    # Can be modified to traffic_data["fips_state_code"].unique()
+    # if running for the entire dataset. Currently does not yet include
+    # optimized operations and will run slow. Preprocessed data may be
+    # downloaded through datasetdownloader.py script in the same directory.
+    codes = traffic_data["fips_state_code"].value_counts()[0:11].index
+    for fips_state_code in tqdm(codes):
         sub_df = preprocess.get_filtered_df(fips_state_code=fips_state_code,
                                             save_dir=processed_dir,
                                             traffic_data=traffic_data,
