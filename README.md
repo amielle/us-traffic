@@ -14,9 +14,17 @@ Results of the analysis and models may be reproduced by following the steps unde
 - [2. Usage guide]()
 - [3. Summary of findings]()
   - [3.1 Data Patterns and Feature Engineering]()
-    - [3.1.1 Temporal]()
-    - [3.1.2 Spatial]()
-    - [3.1.3 Features for forecasting]()
+    - [3.1.1 Introduction to the data and initial assumptions]()
+    - [3.1.2 Temporal]()
+      - Day of Month
+      - Day of Week
+      - Day of Week and Hour of Day
+      - Seasonal Decomposition and Stationarity
+    - [3.1.3 Spatial]()
+      - Incorrect Latitude and Longitude values
+      - Correlation between station count and traffic
+      - Traffic volume trends comparison for urban and rural areas
+    - [3.1.4 Features for forecasting]()
   - [3.2 Forecasting PoC]()
   - [3.3 Insights and recommendations]()
 
@@ -83,17 +91,19 @@ us-traffic
 
 ### 3.1 Data Patterns
 
-During our initial analysis, we can see from the data that there are hourly entries for traffic volume data collected by stations for a given state in the US for the entire year of 2015. Per state, there are counties and more spatial information such as urban vs. rural, longitude, and latitude values. Upon checking the data, there are gaps between daily entries but no null values were found for the hourly entries. Sample distribution plots for some states with incomplete entries for 2015 are shown below.
+#### 3.1.1 Introduction to the data and initial assumptions
+
+During our initial analysis, we can see from the data that there are hourly entries for traffic volume data collected by stations for a given state in the US for the entire year of 2015. Per state, there are counties and more spatial information such as urban vs. rural, longitude, and latitude values. Upon checking the data, there are gaps between daily entries but no null values were found for the hourly entries. We assume that the timezones of the datapoints are relative to the location where the traffic volume data is collected. Sample distribution plots for some states with incomplete entries for 2015 are shown below.
   
 <p align="center"><img src="imgs/eda/sample_dist_dates.png" ></p>
   
 While there are 0 and negative values for the hourly entries, we assume that the sensors for each station are properly calibrated and leave those values untouched as these values may be intentional per station. We also assume that while stations may have different sensors, the traffic volume data entries are normalized to be of the same unit in the dataset.
 
-#### 3.1.1 Temporal
+#### 3.1.2 Temporal
 
 To understand the general behavior of the data, data points are initially aggregated for analysis. If we were to plot the entire traffic data according to states and/or stations, we wouldn't be able to visually see the trends due to the amount of lines in the graph. In this case, a dataframe was retrieved by grouping the traffic data points by date (to retrieve 365 points), aggregating the traffic volume by collecting the total daily traffic volume, and transforming the data to retrieve the hourly entries.
 
-- **Days of Month**
+- **Day of Month**
   
     Since we retrieved the hourly entries, we can compare the behavior across days in a month. The following plot shows a comparison of hourly aggregated traffic volume for different days in January 2015. The lines in this plot correspond to data from a specific day. Upon checking other months, it can be seen that visually there seems to be some patterns depending on the day. We move onto other temporal features to confirm our initial assumptions regarding the data.
 
@@ -110,34 +120,60 @@ To understand the general behavior of the data, data points are initially aggreg
    We can further check the behavior of the traffic volume per hour during the day of week. We can see here that there is a significantly lower traffic volume during early mornings during the weekend. This may be attributed to activities such as schools and regular office hours only occuring during the weekdays, thus lowering the traffic volume during weekends.
   
 <p align="center"><img src="imgs/eda/1.4.3.2.png" ></p>
-  
-  During different parts of the day, the trends for the traffic volume differs e.g. for hours during midnight to early morning (0-5AM), it can be seen that the traffic is low since most human activities such as regular office hours and school occur during morning to afternoon from Monday to Friday. This can be further verified by seeing the spike in traffic volume around midmornings (7-9AM) during weekdays wherein public transportation such as buses/taxis and private vehicles are being used to go to [schools](https://www.ciee.org/typical-day-school), [business establishments, offices](https://htir.com/articles/business-hours.php), and others. After stable traffic volumes during early afternoon (11AM-3PM), there are sudden spikes as people most likely return home after their time outside and slowly winding down further as it goes on to the night. 
+
+   During different parts of the day, the trends for the traffic volume differs e.g. for hours during midnight to early morning (0-5AM), it can be seen that the traffic is low since most human activities such as regular office hours and school occur during morning to afternoon from Monday to Friday. This can be further verified by seeing the spike in traffic volume around midmornings (7-9AM) during weekdays wherein public transportation such as buses/taxis and private vehicles are being used to go to [schools](https://www.ciee.org/typical-day-school), [business establishments, offices](https://htir.com/articles/business-hours.php), and others. After stable traffic volumes during early afternoon (11AM-3PM), there are sudden spikes as people most likely return home after their time outside and slowly winding down further as it goes on to the night. 
   
 <p align="center"><img src="imgs/anims/weekday-weekend.gif" ></p>
   
-  Our initial assumptions regarding the temporal behavior of the data seems to match the general behavior of the data visually during aggregation and from articles regarding regular American working hours. To make it more visually apparent, we also show the average traffic volume per hour for weekday and weekend comparison from the animation above.
+   Our initial assumptions regarding the temporal behavior of the data seems to match the general behavior of the data visually during aggregation and from articles regarding regular American working hours. To make it more visually apparent, we also show the average traffic volume per hour for weekday and weekend comparison from the animation above.
 
-- **Seasonal Decomposition**
+- **Seasonal Decomposition and Stationarity**
+  
+  Since we previously aggregated traffic volume daily, we can check the behavior and trend of the data through seasonal decomposition. Seasonal decomposition was also applied towards hourly entries during EDA but for this summary, trends for daily entries with 365 total data points (daily entries) are shown below. The model was set with a period of 7 to indicate a weekly frequency and matches with our assumptions regardingly the weekly trend of the data across the entire year.
   
 <p align="center"><img src="imgs/eda/1.4.4.3.png" ></p>
 
-#### 3.1.2 Spatial
-While checking the traffic stations, it was seen that there were some entries with common patterns of incorrect longitude and latitude data. This was verified by collecting external data by matching the FIPS state codes to their approximate longitude and latitude.
+  
+   Statistical tests were also applied and it was seen that the p-value of the hourly traffic volume time series data has a low p-value which indicates it being stationary and not needing further pre-processing. However it is noted that the daily time series data for the traffic volume is relatively high so forecasting for daily traffic volume may need pre-processing to adjust these values (e.g. via log).
+  
+#### 3.1.3 Spatial
+  
+- **Incorrect Latitude and Longitude values**
+  
+  While checking the traffic stations, it was seen that there were some entries with common patterns of incorrect longitude and latitude data. This was verified by collecting external data by matching the FIPS state codes to their approximate longitude and latitude.
 
-The following plots show the incorrect longitude and latitude values for Delaware (FIPS state code 10) and South Dakota (FIP state 46). 
-<p align="center"><img src="imgs/eda/10_map_before.png" ></p>
-<p align="center"><img src="imgs/eda/46_map_before.png" ></p>
+  The following plots show the incorrect longitude and latitude values for Delaware (FIPS state code 10) and South Dakota (FIP state 46). 
+  
+<p align="center"><img src="imgs/eda/10_map_before.png" ><br/>
+  <sub>Portion of station plots across a map for FIPS state code 10 (Delaware)</sub></p>
+
+<p align="center"><img src="imgs/eda/46_map_before.png" ><br/>
+  <sub>Portion of station plots across a map for FIPS state code 46 (South Dakota)</sub></p>
  
+   Based on the pattern seen in the data, it showed that there were other stations with the wrong tens value, occasionally having values of around 1, 900, 9, and others. To fix this, thresholding was applied to adjust the values within threshold limits. Afterwards, it can be shown that the initial assumption regarding the incorrect station locations are correct and can be validated from the plots below.
 
-<p align="center"><img src="imgs/eda/10_map_after.png" ></p>
-<p align="center"><img src="imgs/eda/46_map_after.png" ></p>
-<p align="center"><img src="imgs/eda/1.5.3.1_FIPS_1.png" ></p>
-  alabama
-  arizona
-<p align="center"><img src="imgs/eda/1.5.3.1_FIPS_4.png" >
-<p align="center"><img src="imgs/eda/1.5.4.1.png" >
+<p align="center"><img src="imgs/eda/10_map_after.png" ><br/>
+  <sub>Portion of station plots across a map for FIPS state code 10 (Delaware) after processing</sub></p>
+<p align="center"><img src="imgs/eda/46_map_after.png" ><br/>
+  <sub>Portion of station plots across a map for FIPS state code 46 (South Dakota) after processing</sub></p>
+  
+   However, there are still misplaced stations which cannot be corrected through simple thresholding. These stations may be set aside for future exploration and automated retrieval of these anomalous stations may be retrieved by comparing the longitude and latitude values to the reference given under *fips_latlong.csv*.
+  
+- **Correlation between station count and traffic**
+  
+   Since the analysis so far has only been for aggregated total daily traffic volume, there may be a bias concerning the amount of station IDs present in a given state. To reduce this, the traffic data was aggregated per state and the average daily traffic volume across stations per state was collected. The data still seems to be correlated based on the correlation coefficient computed during EDA and the accompanying pairplot below.
+  
+<p align="center"><img src="imgs/eda/station_count-daily_traffic_volume.png" ></p>
+  
+  Correlation was also explored between traffic volume data and coordinate values (latitude, longitude) and have no clear linear correlation and can be seen in section *1.5.3 Explore relation between average daily traffic volume and coordinate values* under the EDA notebook.
 
-#### 3.1.3 Features for forecasting
+- **Traffic volume trends comparison for urban and rural areas**
+  
+  The highest total daily traffic volume was retrieved for the dataset and it was during May 31, 2015 in New York for station ID 003480 with a functional classification name of Urban: Collector. To see if the functional classification name has bearing on the traffic volume, we aggregate the traffic data by this column and retrieve the average total daily traffic volume. Upon checking the plots, it can be seen that compared to rural traffic volumes, urban areas typically have higher average traffic volume across all states. However, there are some values such as "Rural: Principal Arterial - Interstate" which has higher average daily traffic volume but is still much lower compared to it's urban counterpart "Urban: Principal Arterial - Interstate".
+  
+<p align="center"><img src="imgs/eda/1.5.4.1.png" ></p>
+  
+#### 3.1.4 Features for forecasting
 
 ### 3.2 Forecasting PoC
   
