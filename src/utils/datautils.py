@@ -4,6 +4,7 @@ import pandas as pd
 
 # Loading Data
 
+
 def create_folder(DIR):
     if not os.path.isdir(DIR):
         os.makedirs(DIR)
@@ -19,15 +20,15 @@ def gdrive_download(url, filename):
 
 
 def load_txtgz(DATA_LOCATION, FILE):
-    df = pd.read_csv(os.path.join(DATA_LOCATION,FILE),
-                    header=0,
-                    sep=',',
-                    quotechar='"')
+    df = pd.read_csv(os.path.join(DATA_LOCATION, FILE),
+                     header=0,
+                     sep=',',
+                     quotechar='"')
 
     return df
 
 
-def load_traffic_datasets(DATA_LOCATION, TRAFFIC_DATA_FILE, 
+def load_traffic_datasets(DATA_LOCATION, TRAFFIC_DATA_FILE,
                           TRAFFIC_STATIONS_FILE):
     """
         Loads data contained in the files to DataFrames
@@ -42,16 +43,23 @@ def load_traffic_datasets(DATA_LOCATION, TRAFFIC_DATA_FILE,
     return traffic_data, traffic_stations
 
 
-def load_other_datasets(DATA_LOCATION, FIPS_FILE):
+def load_other_datasets(DATA_LOCATION, FIPS_FILE, FIPS_LOC_FILE):
 
     print(f"Loading FIPS state codes reference from '{FIPS_FILE}' ...")
-    fips_cols= ['state_abbreviation', 'fips_code', 'state_name']
-    fips_df = pd.read_csv(os.path.join(DATA_LOCATION, FIPS_FILE), 
-                            names=fips_cols,
-                            header=None)
+    cols = ['state_abbreviation', 'fips_code', 'state_name']
+    fips_df = pd.read_csv(os.path.join(DATA_LOCATION, FIPS_FILE),
+                          names=cols,
+                          header=None)
+
+    print(
+        f"Loading approximate FIPS coordinates reference from '{FIPS_LOC_FILE}' ...")
+    cols = ['fips_code', 'latitude', 'longitude']
+    fips_loc_df = pd.read_csv(os.path.join(DATA_LOCATION, FIPS_LOC_FILE),
+                              names=cols,
+                              header=None)
 
     print("Finished loading data.")
-    return fips_df
+    return fips_df, fips_loc_df
 
 
 def create_fips_ref(fips_df):
@@ -62,6 +70,6 @@ def create_fips_ref(fips_df):
         DataFrame repeatedly.
     """
     fips_state_ref = dict(zip(fips_df["fips_code"],
-                            [x.lower() for x in fips_df["state_name"]]))
+                              [x.lower() for x in fips_df["state_name"]]))
 
     return fips_state_ref

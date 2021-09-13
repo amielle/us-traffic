@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import numpy as np
+from tqdm import tqdm
 
 common_cols = ["direction_of_travel",
                "fips_state_code",
